@@ -3,6 +3,8 @@
 namespace GameCrypto;
 
 use GameCrypto\Contracts\WoWEncryptorInterface;
+use GameCrypto\Enums\EmulatorType;
+use GameCrypto\Factories\EncryptorFactory;
 
 /**
  * Class WoWCrypto
@@ -20,13 +22,19 @@ class WoWCrypto
     private WoWEncryptorInterface $encryptor;
 
     /**
+     * @var EmulatorType The type of emulator being used
+     */
+    private EmulatorType $emulatorType;
+
+    /**
      * WoWCrypto constructor
      *
-     * @param WoWEncryptorInterface $encryptor The encryptor implementation to use
+     * @param EmulatorType $emulatorType The type of emulator to use
      */
-    public function __construct(WoWEncryptorInterface $encryptor)
+    public function __construct(EmulatorType $emulatorType)
     {
-        $this->encryptor = $encryptor;
+        $this->emulatorType = $emulatorType;
+        $this->encryptor = EncryptorFactory::create($emulatorType);
     }
 
     /**

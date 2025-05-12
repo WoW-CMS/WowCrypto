@@ -3,7 +3,7 @@
     "description": "Biblioteca de encriptación para World of Warcraft con soporte para múltiples métodos de hash",
     "type": "library",
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.1",
         "ext-openssl": "*",
         "ext-gmp": "*"
     },
