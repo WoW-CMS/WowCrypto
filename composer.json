@@ -1,0 +1,24 @@
+{
+    "name": "wowcrypto/wowcrypto",
+    "description": "Biblioteca de encriptación para World of Warcraft con soporte para múltiples métodos de hash",
+    "type": "library",
+    "require": {
+        "php": ">=7.4",
+        "ext-openssl": "*",
+        "ext-gmp": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GameCrypto\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GameCrypto\\Tests\\": "tests/"
+        }
+    },
+    "license": "MIT"
+}
