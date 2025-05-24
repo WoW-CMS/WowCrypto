@@ -5,13 +5,13 @@ namespace GameCrypto\Contracts;
 interface WoWEncryptorInterface
 {
     /**
-     * Encripta una contraseña usando el método específico
+     * Encrypts the provided credentials.
      *
      * @param string $username
      * @param string $password
-     * @return string
+     * @return array<string, string> Returns an array with at least a 'hash' key, and optionally 'salt' and 'verifier'.
      */
-    public function encrypt(string $username, string $password): string;
+    public function encrypt(string $username, string $password): array;
 
     /**
      * Verifica si una contraseña coincide con el hash

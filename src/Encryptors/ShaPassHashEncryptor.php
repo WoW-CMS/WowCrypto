@@ -22,9 +22,9 @@ class ShaPassHashEncryptor implements WoWEncryptorInterface
      * @param string $password The account password
      * @return string The encrypted password hash
      */
-    public function encrypt(string $username, string $password): string
+    public function encrypt(string $username, string $password): array
     {
-        return strtoupper(sha1(strtoupper($username . ':' . $password)));
+        return ['hash' => strtoupper(sha1(strtoupper($username . ':' . $password)))];
     }
 
     /**

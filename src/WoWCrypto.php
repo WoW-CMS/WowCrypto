@@ -18,7 +18,7 @@ class WoWCrypto
         $this->encryptor = EncryptorFactory::create($this->config->getEncryptionType());
     }
 
-    public function encrypt(string $username, string $password): string
+    public function encrypt(string $username, string $password): array
     {
         return $this->encryptor->encrypt($username, $password);
     }

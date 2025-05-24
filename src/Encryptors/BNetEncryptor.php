@@ -25,9 +25,10 @@ class BNetEncryptor implements WoWEncryptorInterface
      * @param string $password The account password
      * @return string The encrypted password hash
      */
-    public function encrypt(string $username, string $password): string
+    public function encrypt(string $username, string $password): array
     {
-        return strtoupper(bin2hex(strrev(hex2bin(strtoupper(hash('sha256', strtoupper(hash('sha256', strtoupper($username)) . ':' . strtoupper($password))))))));
+        $hash = strtoupper(bin2hex(strrev(hex2bin(strtoupper(hash('sha256', strtoupper(hash('sha256', strtoupper($username)) . ':' . strtoupper($password))))))));
+        return ['hash' => $hash];
     }
 
     /**

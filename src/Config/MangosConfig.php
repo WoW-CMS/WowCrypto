@@ -6,7 +6,7 @@ use GameCrypto\Enums\EncryptionType;
 
 class MangosConfig extends EmulatorConfig
 {
-    public function __construct(EncryptionType $encryptionType = EncryptionType::SRP6_V2)
+    public function __construct(EncryptionType $encryptionType = EncryptionType::SHA_PASS_HASH)
     {
         $this->encryptionType = $encryptionType;
     }

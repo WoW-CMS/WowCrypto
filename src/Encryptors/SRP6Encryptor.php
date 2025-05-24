@@ -47,12 +47,25 @@ class SRP6Encryptor implements WoWEncryptorInterface
      * @param string $password The account password
      * @return string The encrypted password hash
      */
-    public function encrypt(string $username, string $password): string
+    public function encrypt(string $username, string $password): array
     {
         if ($this->isV2) {
-            return $this->calculateV2Hash($username, $password);
+            $salt = random_bytes(32);
+            $saltHex = bin2hex($salt);
+            $h1 = sha1(strtoupper($username . ':' . $password), true);
+            $h2 = sha1($salt . $h1, true);
+            $x = new \GMP(bin2hex($h2), 16);
+            $g = new \GMP($this->g);
+            $N = new \GMP($this->N, 16);
+            $v = gmp_powm($g, $x, $N);
+            $verifier = strtoupper(str_pad(gmp_strval($v, 16), 64, '0', STR_PAD_LEFT));
+            return [
+                'salt' => $saltHex,
+                'verifier' => $verifier
+            ];
         }
-        return $this->calculateV1Hash($username, $password);
+        $h1 = sha1(strtoupper($username . ':' . $password), true);
+        return ['hash' => strtoupper(bin2hex($h1))];
     }
 
     /**
