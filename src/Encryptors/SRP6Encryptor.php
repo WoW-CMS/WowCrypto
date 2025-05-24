@@ -50,7 +50,7 @@ class SRP6Encryptor implements WoWEncryptorInterface
     public function encrypt(string $username, string $password): array
     {
         if ($this->isV2) {
-            $salt = random_bytes(32);
+            $salt = random_bytes(16);
             $saltHex = bin2hex($salt);
             $h1 = sha1(strtoupper($username . ':' . $password), true);
             $h2 = sha1($salt . $h1, true);
