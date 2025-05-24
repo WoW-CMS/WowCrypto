@@ -51,19 +51,22 @@ class SRP6Encryptor implements WoWEncryptorInterface
     {
         if ($this->isV2) {
             $salt = random_bytes(32); // 32 bytes
-            $g = gmp_init(7);
-            $N = gmp_init('894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7', 16);
-            $h1 = sha1(strtoupper($username . ':' . $password), true);
-            $h2 = sha1($salt . $h1, true);
-            $x = gmp_import($h2, 1, GMP_LSW_FIRST); // little-endian
-            $verifier = gmp_powm($g, $x, $N);
-            $verifier_bin = gmp_export($verifier, 1, GMP_LSW_FIRST);
-            $verifier_bin = str_pad($verifier_bin, 32, "\0", STR_PAD_RIGHT); // pad to 32 bytes
+            $g    = gmp_init(7);
+            $N    = gmp_init($this->N, 16);
+
+            $h1 = sha1(strtoupper($username. ':'. $password), true);
+            $h2 = sha1($salt.$h1, true);
+
+            $verifier = gmp_powm($g, $h2, $N);
+            $verifier = gmp_export($verifier, 1, GMP_LSW_FIRST);
+            $verifier = str_pad($verifier, 32, chr(0), STR_PAD_RIGHT);
+
             return [
-                'salt' => bin2hex($salt), // or raw $salt if your DB expects binary
-                'verifier' => bin2hex($verifier_bin) // or raw $verifier_bin
+                'verifier' => $verifier,
+               'salt'     => $salt,
             ];
         }
+        
         $h1 = sha1(strtoupper($username . ':' . $password), true);
         return ['hash' => strtoupper(bin2hex($h1)), 'salt' => ''];
     }
