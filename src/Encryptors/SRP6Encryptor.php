@@ -50,12 +50,14 @@ class SRP6Encryptor implements WoWEncryptorInterface
     public function encrypt(string $username, string $password): array
     {
         if ($this->isV2) {
-            $salt = random_bytes(32); // 32 bytes
+            $salt = random_bytes(32);
             $g    = gmp_init(7);
             $N    = gmp_init($this->N, 16);
 
             $h1 = sha1(strtoupper($username. ':'. $password), true);
             $h2 = sha1($salt.$h1, true);
+            
+            $h2 = gmp_import($h2, 1, GMP_LSW_FIRST);
 
             $verifier = gmp_powm($g, $h2, $N);
             $verifier = gmp_export($verifier, 1, GMP_LSW_FIRST);
@@ -66,7 +68,7 @@ class SRP6Encryptor implements WoWEncryptorInterface
                'salt'     => $salt,
             ];
         }
-        
+
         $h1 = sha1(strtoupper($username . ':' . $password), true);
         return ['hash' => strtoupper(bin2hex($h1)), 'salt' => ''];
     }
