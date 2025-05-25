@@ -79,23 +79,16 @@ class SRP6Encryptor implements WoWEncryptorInterface
      */
     protected function calculateV1Hash(string $username, string $password, string $salt): string
     {
-        // Algorithm for SRP6 version 1
+        // algorithm constants
         $g = gmp_init(2);
-        $N = gmp_init($this->N, 16);
-    
-        $srpPassword = hash('sha256',strtoupper($username . ':' . $password), true);
+        $N = gmp_init('86A7F6DEEB306CE519770FE37D556F29944132554DED0BD68205E27F3231FEF5A10108238A3150C59CAF7B0B6478691C13A6ACF5E1B5ADAFD4A943D4A21A142B800E8A55F8BFBAC700EB77A7235EE5A609E350EA9FC19F10D921C2FA832E4461B7125D38D254A0BE873DFC27858ACB3F8B9F258461E4373BC3A6C2A9634324AB', 16);
 
-        // calculate x
-        $x = hash('sha256', $salt . $srpPassword, TRUE);
+        // calculate first then calculate the second hash; at last convert to integer (little-endian)
+        $h = gmp_import(hash('sha256', $salt . hash('sha256', strtoupper(hash('sha256', strtoupper($username), false) . ':' . substr($password, 0, 16)), true), true), 1, GMP_LSW_FIRST);
 
-        // g^h2 mod N
-        $verifier = gmp_powm($g, $x, $N);
+        // convert back to byte array, within a 128 pad; remember zeros go on the end in little-endian
+        $verifier = str_pad(gmp_export(gmp_powm($g, $h, $N), 1, GMP_LSW_FIRST), 128, chr(0), STR_PAD_RIGHT);
 
-        // convert back to a byte array (little-endian)
-        $verifier = gmp_export($verifier, 1, GMP_LSW_FIRST);
-
-        // pad to 256 bytes, remember that zeros go on the end in little-endian!
-        $verifier = str_pad($verifier, 256, chr(0), STR_PAD_RIGHT);
         // done!
         return $verifier;
     }
