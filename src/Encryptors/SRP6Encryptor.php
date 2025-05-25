@@ -47,10 +47,10 @@ class SRP6Encryptor implements WoWEncryptorInterface
      * @param string $password The account password
      * @return string The encrypted password hash
      */
-    public function encrypt(string $username, string $password): array
+    public function encrypt(string $email, string $password): array
     {
         $salt = random_bytes(32);
-        $g    = gmp_init(7);
+        $g    = gmp_init(2);
         $N    = gmp_init(
             'AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC3192943DB56050A37329CBB4A099ED8193E0757767A13DD52312AB4B0331
             0DCD7F48A9DA04FD50E8083969EDB767B0CF6095179A163AB3661A05FBD5FAAAE82918A9962F0B93B855F97993EC975EEAA80D740ADBF4F
@@ -60,8 +60,17 @@ class SRP6Encryptor implements WoWEncryptorInterface
             16
         );
 
-        $password = hash('sha256', strtoupper($username . ':' . $password), true);
-        $x = hash('sha256', $salt. $password, true);
+        $password = strtoupper(hash('sha256', strtoupper($email), false)) . ":" . $password;
+        $xBytes = hash_pbkdf2('sha512', $password, $salt, 15000, 64, true);
+        $x = gmp_import($xBytes, 1, GMP_MSW_FIRST);
+        
+        if (ord($xBytes[0]) & 0x80)
+        {
+            $fix = gmp_init('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 16);
+            $x = gmp_sub($x, $fix);
+        }
+
+        $x = gmp_mod($x, gmp_sub($N, 1));
         
         // G^h2 mod N
         $verifier = gmp_powm($g, $x, $N);
