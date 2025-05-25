@@ -37,7 +37,7 @@ class SRP6Encryptor implements WoWEncryptorInterface
     public function __construct(bool $isV2 = true)
     {
         $this->isV2 = $isV2;
-        $this->N = '894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7'; // This is for v1SRP
+        $this->N = '86A7F6DEEB306CE519770FE37D556F29944132554DED0BD68205E27F3231FEF5A10108238A3150C59CAF7B0B6478691C13A6ACF5E1B5ADAFD4A943D4A21A142B800E8A55F8BFBAC700EB77A7235EE5A609E350EA9FC19F10D921C2FA832E4461B7125D38D254A0BE873DFC27858ACB3F8B9F258461E4373BC3A6C2A9634324AB'; // This is for v1SRP
     }
 
     /**
@@ -51,7 +51,7 @@ class SRP6Encryptor implements WoWEncryptorInterface
     {
         $salt = random_bytes(32);
 
-        $verifier = self::calculateV2Hash($email, $password, $salt);
+        $verifier = self::calculateV1Hash($email, $password, $salt);
 
         return [$salt, $verifier];
     }
@@ -77,23 +77,16 @@ class SRP6Encryptor implements WoWEncryptorInterface
      * @param string $salt The salt value
      * @return string The calculated SRP6 hash
      */
-    protected function calculateV2Hash(string $username, string $password, string $salt): string
+    protected function calculateV1Hash(string $username, string $password, string $salt): string
     {
-        // Algorithm for SRP6 version 2
+        // Algorithm for SRP6 version 1
         $g = gmp_init(2);
-        $N = gmp_init('AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC3192943DB56050A37329CBB4A099ED8193E0757767A13DD52312AB4B03310DCD7F48A9DA04FD50E8083969EDB767B0CF6095179A163AB3661A05FBD5FAAAE82918A9962F0B93B855F97993EC975EEAA80D740ADBF4FF747359D041D5C33EA71D281E446B14773BCA97B43A23FB801676BD207A436C6481F1D2B9078717461A5B9D32E688F87748544523B524B0D57D5EA77A2775D2ECFA032CFBDBF52FB3786160279004E57AE6AF874E7303CE53299CCC041C7BC308D82A5698F3A8D0C38271AE35F8E9DBFBB694B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F9E4AFF73', 16);
+        $N = gmp_init($this->N, 16);
     
-        $srpPassword = strtoupper(hash('sha256', strtoupper($username), false)) . ":" . $password;
+        $srpPassword = hash('sha256',strtoupper($username . ':' . $password), true);
 
         // calculate x
-        $xBytes = hash_pbkdf2("sha512", $srpPassword, $salt, 15000, 64, true);
-        $x = gmp_import($xBytes, 1, GMP_MSW_FIRST);
-        if (ord($xBytes[0]) & 0x80)
-        {
-            $fix = gmp_init('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 16);
-            $x = gmp_sub($x, $fix);
-        }
-        $x = gmp_mod($x, gmp_sub($N, 1));
+        $x = hash('sha256', $salt . $srpPassword, TRUE);
 
         // g^h2 mod N
         $verifier = gmp_powm($g, $x, $N);
@@ -103,7 +96,6 @@ class SRP6Encryptor implements WoWEncryptorInterface
 
         // pad to 256 bytes, remember that zeros go on the end in little-endian!
         $verifier = str_pad($verifier, 256, chr(0), STR_PAD_RIGHT);
-
         // done!
         return $verifier;
     }
