@@ -71,6 +71,31 @@ class SRP6Encryptor implements WoWEncryptorInterface
 
     /**
      * Calculates the SRP6 hash for a given username, password, and salt
+     *
+     * @param string $username The account username
+     * @param string $password The account password
+     */
+    public function calculateHash(string $username, string $password): array
+    {
+        $salt = random_bytes(32);
+        // algorithm constants
+        $g = gmp_init(7);
+        $N = gmp_init('894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7', 16);
+
+        // calculate first then calculate the second hash; at last convert to integer (little-endian)
+        $h = gmp_import(sha1($salt . sha1(strtoupper($username . ':' . $password), true), true), 1, GMP_LSW_FIRST);
+
+        // convert back to byte array, within a 32 pad; remember zeros go on the end in little-endian
+        $verifier = str_pad(gmp_export(gmp_powm($g, $h, $N), 1, GMP_LSW_FIRST), 32, chr(0), STR_PAD_RIGHT);
+
+        return [
+            'salt' => $salt,
+            'verifier' => $verifier
+        ];
+    }
+
+    /**
+     * Calculates the SRP6 hash for a given username, password, and salt
      * 
      * @param string $username The account username
      * @param string $password The account password
