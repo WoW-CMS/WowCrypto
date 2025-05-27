@@ -51,6 +51,11 @@ class SRP6Encryptor implements WoWEncryptorInterface
     {
         $salt = random_bytes(32);
 
+        if ($this->isV2) {
+            $verifier = self::calculateV2Hash($email, $password, $salt);
+            return [$salt, $verifier];
+        }
+        
         $verifier = self::calculateV1Hash($email, $password, $salt);
 
         return [$salt, $verifier];
@@ -113,6 +118,36 @@ class SRP6Encryptor implements WoWEncryptorInterface
 
         // convert back to byte array, within a 128 pad; remember zeros go on the end in little-endian
         $verifier = str_pad(gmp_export(gmp_powm($g, $h, $N), 1, GMP_LSW_FIRST), 128, chr(0), STR_PAD_RIGHT);
+
+        // done!
+        return $verifier;
+    }
+
+    protected function calculateV2Hash(string $username, string $password, string $salt): string
+    {
+        $g = gmp_init(2);
+        $N = gmp_init('AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC3192943DB56050A37329CBB4A099ED8193E0757767A13DD52312AB4B03310DCD7F48A9DA04FD50E8083969EDB767B0CF6095179A163AB3661A05FBD5FAAAE82918A9962F0B93B855F97993EC975EEAA80D740ADBF4FF747359D041D5C33EA71D281E446B14773BCA97B43A23FB801676BD207A436C6481F1D2B9078717461A5B9D32E688F87748544523B524B0D57D5EA77A2775D2ECFA032CFBDBF52FB3786160279004E57AE6AF874E7303CE53299CCC041C7BC308D82A5698F3A8D0C38271AE35F8E9DBFBB694B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F9E4AFF73', 16);
+        
+        $password = strtoupper(hash('sha256', strtoupper($username), false)) . ":" . $password;
+
+        $xBytes = hash_pbkdf2("sha512", $password, $salt, 15000, 64, true);
+        $x = gmp_import($xBytes, 1, GMP_MSW_FIRST);
+
+        if (ord($xBytes[0]) & 0x80)
+        {
+            $fix = gmp_init('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 16);
+            $x = gmp_sub($x, $fix);
+        }
+        $x = gmp_mod($x, gmp_sub($N, 1));
+
+        // g^h2 mod N
+        $verifier = gmp_powm($g, $x, $N);
+
+        // convert back to a byte array (little-endian)
+        $verifier = gmp_export($verifier, 1, GMP_LSW_FIRST);
+
+        // pad to 256 bytes, remember that zeros go on the end in little-endian!
+        $verifier = str_pad($verifier, 256, chr(0), STR_PAD_RIGHT);
 
         // done!
         return $verifier;
