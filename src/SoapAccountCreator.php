@@ -1,6 +1,8 @@
 <?php
 
-namespace WowCrypto;
+namespace GameCrypto;
+
+use SoapParam;
 
 class SoapAccountCreator
 {
@@ -33,25 +35,29 @@ class SoapAccountCreator
 
     public function createAccount(string $username, string $password, ?string $email): string
     {
-        $cmd = "account create $username $password";
-
-        if ($email) {
-            $cmd .= " $email";
-        }
+        $cmd = "acc create $username $password $email";
 
         $client = $this->getSoapClient();
-        return $client->__soapCall('executeCommand', ['command' => $cmd]);
+        return $client->executeCommand(new SoapParam($cmd, 'command'));
+    }
+
+    public function createAccountBnet(string $email, string $password): string
+    {
+        $cmd = "bnet create $email $password";
+
+        $client = $this->getSoapClient();
+        return $client->executeCommand(new SoapParam($cmd, 'command'));
     }
 
     public function soapTest(): string
     {
         $client = $this->getSoapClient();
-        return $client->__soapCall('executeCommand', ['command' => '.server info']);
+        return $client->executeCommand(new SoapParam('server info', 'command'));
     }
 
     public function customCommand(string $command): string
     {
         $client = $this->getSoapClient();
-        return $client->__soapCall('executeCommand', ['command' => $command]);
+        return $client->executeCommand(new SoapParam($command, 'command'));
     }
 }
