@@ -54,11 +54,14 @@ class SRP6Encryptor implements WoWEncryptorInterface
         if ($this->isV2) {
             $verifier = self::calculateV2Hash($email, $password, $salt);
             return [$salt, $verifier];
+        } else {
+            $verifier = self::calculateV1Hash($email, $password, $salt);
+            return [$salt, $verifier];
         }
-        
-        $verifier = self::calculateV1Hash($email, $password, $salt);
 
-        return [$salt, $verifier];
+        $verifierAcc = $this->calculateHash($email, $password);
+
+        return [$salt, $verifier, $verifierAcc];
     }
 
     /**
