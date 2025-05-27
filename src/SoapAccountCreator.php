@@ -42,4 +42,16 @@ class SoapAccountCreator
         $client = $this->getSoapClient();
         return $client->__soapCall('executeCommand', ['command' => $cmd]);
     }
+
+    public function soapTest(): string
+    {
+        $client = $this->getSoapClient();
+        return $client->__soapCall('executeCommand', ['command' => '.server info']);
+    }
+
+    public function customCommand(string $command): string
+    {
+        $client = $this->getSoapClient();
+        return $client->__soapCall('executeCommand', ['command' => $command]);
+    }
 }
