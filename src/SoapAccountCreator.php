@@ -10,14 +10,16 @@ class SoapAccountCreator
     private int $port;
     private string $user;
     private string $pass;
+    private string $urn;
     private bool $useSSL;
 
-    public function __construct(string $host, int $port, string $user, string $pass, bool $useSSL = false)
+    public function __construct(string $host, int $port, string $user, string $pass, string $urn, bool $useSSL = false)
     {
         $this->host = $host;
         $this->port = $port;
         $this->user = $user;
         $this->pass = $pass;
+        $this->urn  = $urn;
         $this->useSSL = $useSSL;
     }
 
@@ -25,7 +27,7 @@ class SoapAccountCreator
     {
         return new \SoapClient(null, [
             'location' => ($this->useSSL ? 'https://' : 'http://') . $this->host . ':' . $this->port . '/',
-            'uri' => 'urn:TC',
+            'uri' => 'urn:'. $this->urn,
             'style' => SOAP_RPC,
             'login' => $this->user,
             'password' => $this->pass,
