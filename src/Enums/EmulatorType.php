@@ -4,6 +4,7 @@ namespace GameCrypto\Enums;
 
 use GameCrypto\Config\EmulatorConfig;
 use GameCrypto\Config\MangosConfig;
+use GameCrypto\Config\SkyfireConfig;
 use GameCrypto\Config\TrinityConfig;
 
 enum EmulatorType: string
@@ -27,8 +28,9 @@ enum EmulatorType: string
     public function getDefaultConfig(): EmulatorConfig
     {
         return match($this) {
-            self::MANGOS => new MangosConfig(),
-            self::TRINITY_CORE => new TrinityConfig(),
+            self::MANGOS, self::CMANGOS => new MangosConfig(),
+            self::TRINITY_CORE, self::AZEROTH_CORE => new TrinityConfig(),
+            self::SKYFIRE => new SkyfireConfig(),
         };
     }
 }

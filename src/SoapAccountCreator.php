@@ -2,6 +2,11 @@
 
 namespace GameCrypto;
 
+use GameCrypto\Modules\AccountModule;
+use GameCrypto\Modules\CharacterModule;
+use GameCrypto\Modules\MailModule;
+use GameCrypto\Modules\ModerationModule;
+use GameCrypto\Modules\ServerModule;
 use SoapParam;
 
 class SoapAccountCreator
@@ -12,6 +17,11 @@ class SoapAccountCreator
     private string $pass;
     private string $urn;
     private bool $useSSL;
+    private ?AccountModule $accountModule = null;
+    private ?CharacterModule $characterModule = null;
+    private ?MailModule $mailModule = null;
+    private ?ModerationModule $moderationModule = null;
+    private ?ServerModule $serverModule = null;
 
     public function __construct(string $host, int $port, string $user, string $pass, string $urn, bool $useSSL = false)
     {
@@ -35,31 +45,52 @@ class SoapAccountCreator
         ]);
     }
 
-    public function createAccount(string $username, string $password, ?string $email): string
+    public function account(): AccountModule
     {
-        $cmd = "acc create $username $password $email";
-
-        $client = $this->getSoapClient();
-        return $client->executeCommand(new SoapParam($cmd, 'command'));
+        return $this->accountModule ??= new AccountModule($this);
     }
 
-    public function createAccountBnet(string $email, string $password): string
+    public function character(): CharacterModule
     {
-        $cmd = "bnet create $email $password";
-
-        $client = $this->getSoapClient();
-        return $client->executeCommand(new SoapParam($cmd, 'command'));
+        return $this->characterModule ??= new CharacterModule($this);
     }
 
-    public function soapTest(): string
+    public function mail(): MailModule
     {
-        $client = $this->getSoapClient();
-        return $client->executeCommand(new SoapParam('server info', 'command'));
+        return $this->mailModule ??= new MailModule($this);
+    }
+
+    public function moderation(): ModerationModule
+    {
+        return $this->moderationModule ??= new ModerationModule($this);
+    }
+
+    public function server(): ServerModule
+    {
+        return $this->serverModule ??= new ServerModule($this);
     }
 
     public function customCommand(string $command): string
     {
+        return $this->execute(SoapCommand::raw($command));
+    }
+
+    public function execute(SoapCommand|string $command): string
+    {
+        $commandString = $command instanceof SoapCommand
+            ? $command->toCommandString()
+            : SoapCommand::raw($command)->toCommandString();
+
         $client = $this->getSoapClient();
-        return $client->executeCommand(new SoapParam($command, 'command'));
+
+        return $client->executeCommand(new SoapParam($commandString, 'command'));
+    }
+
+    /**
+     * @param iterable<string|int|float|bool|\Stringable|null> $segments
+     */
+    public function executeSegments(iterable $segments): string
+    {
+        return $this->execute(SoapCommand::fromSegments($segments));
     }
 }

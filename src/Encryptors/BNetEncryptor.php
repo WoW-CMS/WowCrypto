@@ -36,11 +36,17 @@ class BNetEncryptor implements WoWEncryptorInterface
      *
      * @param string $username The Battle.net account username
      * @param string $password The account password to verify
-     * @param string $hash The hash to compare against
+     * @param array<string, string>|string $hash The hash payload to compare against
      * @return bool Returns true if the password matches, false otherwise
      */
-    public function verify(string $username, string $password, string $hash): bool
+    public function verify(string $username, string $password, array|string $hash): bool
     {
-        return $this->encrypt($username, $password) === strtoupper($hash);
+        $expectedHash = is_array($hash) ? ($hash['hash'] ?? null) : $hash;
+
+        if ($expectedHash === null) {
+            return false;
+        }
+
+        return $this->encrypt($username, $password)['hash'] === strtoupper($expectedHash);
     }
 }

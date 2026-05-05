@@ -18,8 +18,8 @@ interface WoWEncryptorInterface
      *
      * @param string $username
      * @param string $password
-     * @param string $hash
+     * @param array<string, string>|string $hash
      * @return bool
      */
-    public function verify(string $username, string $password, string $hash): bool;
+    public function verify(string $username, string $password, array|string $hash): bool;
 }

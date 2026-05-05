@@ -45,23 +45,27 @@ class SRP6Encryptor implements WoWEncryptorInterface
      *
      * @param string $username The account username
      * @param string $password The account password
-     * @return string The encrypted password hash
+     * @return array<string, string> The encrypted password payload
      */
-    public function encrypt(string $email, string $password): array
+    public function encrypt(string $username, string $password): array
     {
         $salt = random_bytes(32);
 
         if ($this->isV2) {
-            $verifier = self::calculateV2Hash($email, $password, $salt);
-            return [$salt, $verifier];
-        } else {
-            $verifier = self::calculateV1Hash($email, $password, $salt);
-            return [$salt, $verifier];
+            $verifier = self::calculateV2Hash($username, $password, $salt);
+
+            return [
+                'salt' => $salt,
+                'verifier' => $verifier,
+            ];
         }
 
-        $verifierAcc = $this->calculateHash($email, $password);
+        $verifier = self::calculateV1Hash($username, $password, $salt);
 
-        return [$salt, $verifier, $verifierAcc];
+        return [
+            'salt' => $salt,
+            'verifier' => $verifier,
+        ];
     }
 
     /**
@@ -69,12 +73,20 @@ class SRP6Encryptor implements WoWEncryptorInterface
      *
      * @param string $username The account username
      * @param string $password The account password to verify
-     * @param string $hash The hash to compare against
+     * @param array<string, string>|string $hash The hash payload to compare against
      * @return bool Returns true if the password matches, false otherwise
      */
-    public function verify(string $username, string $password, string $hash): bool
+    public function verify(string $username, string $password, array|string $hash): bool
     {
-        return $this->encrypt($username, $password) === strtoupper($hash);
+        if (!is_array($hash) || !isset($hash['salt'], $hash['verifier'])) {
+            return false;
+        }
+
+        $verifier = $this->isV2
+            ? self::calculateV2Hash($username, $password, $hash['salt'])
+            : self::calculateV1Hash($username, $password, $hash['salt']);
+
+        return hash_equals($hash['verifier'], $verifier);
     }
 
     /**
